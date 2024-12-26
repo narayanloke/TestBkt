@@ -16,6 +16,7 @@
 #include <time.h>
 #include <signal.h>
 #include <fcntl.h>
+#include <errno.h>
 
 #define BUFLEN 512
 #define PORT 9000
@@ -117,6 +118,14 @@ void* receive_thread(void* arg) {
     socklen_t slen = sizeof(struct sockaddr_in);
     int recv_len;
 
+
+    struct timeval tv;
+
+    // Set socket receive timeout
+    tv.tv_sec = 0;
+    tv.tv_usec = 1000;  // 1ms timeout
+    setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
+
     printf("Receiver thread started...\n");
 
     while (1) {
@@ -130,18 +139,26 @@ void* receive_thread(void* arg) {
         // Clear buffer
         memset(buf, 0, BUFLEN);
 
+        recv_len = recvfrom(sock, buf, BUFLEN, MSG_DONTWAIT,(struct sockaddr*)si_other, &slen);
         // Try to receive data
-        if ((recv_len = recvfrom(sock, buf, BUFLEN, MSG_DONTWAIT,
-                                (struct sockaddr*)si_other, &slen)) == -1) {
-            // If no data, sleep briefly to prevent CPU spinning
-            usleep(1000);  // 1ms sleep
-            continue;
+//        if ((recv_len = recvfrom(sock, buf, BUFLEN, MSG_DONTWAIT,
+//                                (struct sockaddr*)si_other, &slen)) == -1) {
+//            // If no data, sleep briefly to prevent CPU spinning
+//           // usleep(1000);  // 1ms sleep
+//            continue;
+//        }
+
+        if (recv_len > 0) {
+            printf("Received packet from %s:%d\n",
+            inet_ntoa(si_other->sin_addr), ntohs(si_other->sin_port));
+            printf("Data: %s\n", buf);
+        }
+        else if (errno != EAGAIN && errno != EWOULDBLOCK) {
+            perror("recvfrom failed");
         }
 
         // Print received message
-        printf("Received packet from %s:%d\n",
-               inet_ntoa(si_other->sin_addr), ntohs(si_other->sin_port));
-        printf("Data: %s\n", buf);
+
     }
 
     printf("Receiver thread ending...\n");
