@@ -15,6 +15,7 @@
 #include <pthread.h>
 #include <time.h>
 #include <signal.h>
+#include <fcntl.h>
 
 #define BUFLEN 512
 #define PORT 9000
@@ -57,6 +58,8 @@ int createUDPSocket(struct sockaddr_in *si_me, int *s, const char *interface_nam
         return -1;
     }
 
+    int flags = fcntl(*s, F_GETFL, 0);
+    fcntl(*s, F_SETFL, flags | O_NONBLOCK);
     // Setup address structure
     memset((char *)si_me, 0, sizeof(struct sockaddr_in));
     si_me->sin_family = AF_INET;
