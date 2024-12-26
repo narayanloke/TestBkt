@@ -1,0 +1,13 @@
+# depslib dependency file v1.0
+1735241114 source:/home/lokesaheb/cprojs/TestTLM/main.c
+	<stdio.h>
+	<stdlib.h>
+	<stdint.h>
+	<math.h>
+	<string.h>
+	<sys/socket.h>
+	<netinet/in.h>
+	<arpa/inet.h>
+	<net/if.h>
+	<sys/ioctl.h>
+
